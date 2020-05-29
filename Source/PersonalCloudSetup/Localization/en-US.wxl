@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WixLocalization Culture="en-US" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="PersonalCloudFolderName" Overridable="yes">Personal Cloud</String>
+  <String Id="PersonalCloudConfiguratorShortcutTitle" Overridable="yes">Configure Personal Cloud</String>
+  <String Id="LaunchConfigurator" Overridable="yes">Launch Personal Cloud Configurator</String>
+</WixLocalization>

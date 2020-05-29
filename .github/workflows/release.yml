@@ -1,0 +1,47 @@
+name: Build Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      SolutionPath: 'Source\PersonalCloudSetup.sln'
+      Configuration: 'Release'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }} 
+          submodules: 'recursive'
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.202
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.0.0
+
+      - name: Restore
+        run: msbuild $env:SolutionPath /t:Restore /p:Configuration=$env:Configuration
+
+      - name: Build
+        run: msbuild $env:SolutionPath /v:d /t:Rebuild /p:Configuration=$env:Configuration /maxCpuCount
+
+      - name: Create Zip File
+        run: Compress-Archive -Path ".\Source\PersonalCloudSetup\bin\Release\*",".\Data" -DestinationPath .\PersonalCloudSetup.zip
+          
+      - name: Upload Zip File
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./PersonalCloudSetup.zip
+          asset_name: PersonalCloudSetup.zip
+          asset_content_type: application/zip
