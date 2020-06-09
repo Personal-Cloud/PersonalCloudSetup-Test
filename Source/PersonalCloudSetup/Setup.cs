@@ -43,8 +43,14 @@ namespace PersonalCloudSetup
                         GetName().CodeBase)).LocalPath;
 
                     Environment.CurrentDirectory = sAppPath;
-                    string msiFilename = BuildMSI(Platform.x64, di.FullName, buildVersion);
-                    BuildBundle(Platform.x64, di.FullName, msiFilename);
+                    {
+                        string msiFilename = BuildMSI(Platform.x86, di.FullName, buildVersion);
+                        BuildBundle(Platform.x86, di.FullName, msiFilename);
+                    }
+                    {
+                        string msiFilename = BuildMSI(Platform.x64, di.FullName, buildVersion);
+                        BuildBundle(Platform.x64, di.FullName, msiFilename);
+                    }
                     return 0;
                 }
                 else
@@ -68,7 +74,12 @@ namespace PersonalCloudSetup
         {
             string platformString;
             string platformString2;
-            if (platform == Platform.x64)
+            if (platform == Platform.x86)
+            {
+                platformString = "x86";
+                platformString2 = "Intel;";
+            }
+            else if (platform == Platform.x64)
             {
                 platformString = "x64";
                 platformString2 = "x64;";
@@ -96,6 +107,13 @@ namespace PersonalCloudSetup
                             },
 
                             new WixSharp.Files(Path.Combine(dataFolder, $@"dokan_bin\{platformString}\*.*"),
+                                f => !f.EndsWith(".obj") &&
+                                     !f.EndsWith(".pdb"))
+                            {
+                                AttributesDefinition = "ReadOnly=no"
+                            },
+
+                            new WixSharp.Files(Path.Combine(dataFolder, $@"ffmpeg_bin\{platformString}\*.*"),
                                 f => !f.EndsWith(".obj") &&
                                      !f.EndsWith(".pdb"))
                             {

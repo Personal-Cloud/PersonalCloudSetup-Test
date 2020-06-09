@@ -27,6 +27,18 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.0.0
 
+      - name: Download ffmpeg
+        run: |
+            Invoke-WebRequest https://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-4.2.3-win32-static.zip -Out .\ffmpeg-4.2.3-win32-static.zip
+            Invoke-WebRequest https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-4.2.3-win64-static.zip -Out .\ffmpeg-4.2.3-win64-static.zip
+
+      - name: Extract ffmpeg
+        run: |
+            Expand-Archive -Path .\ffmpeg-4.2.3-win32-static.zip -DestinationPath .\
+            Copy-Item -Path .\ffmpeg-4.2.3-win32-static\bin\ -Filter ffmpeg.exe -Destination .\Data\ffmpeg_bin\x86\ -Recurse
+            Expand-Archive -Path .\ffmpeg-4.2.3-win64-static.zip -DestinationPath .\
+            Copy-Item -Path .\ffmpeg-4.2.3-win64-static\bin\ -Filter ffmpeg.exe -Destination .\Data\ffmpeg_bin\x64\ -Recurse
+
       - name: Restore
         run: msbuild $env:SolutionPath /t:Restore /p:Configuration=$env:Configuration
 
