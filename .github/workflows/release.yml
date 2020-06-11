@@ -27,6 +27,15 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.0.0
 
+      - name: Setup Wix Toolset
+        run: |
+            Invoke-WebRequest https://www.nuget.org/api/v2/package/WixSharp.wix.bin/3.11.2 -Out .\WixSharp.wix.bin.zip
+            Expand-Archive -Path .\WixSharp.wix.bin.zip -DestinationPath .\WixSharp.wix.bin
+            mkdir .\Data\wix_bin
+            Move-Item -Path .\WixSharp.wix.bin\tools\ -Filter *.* -Destination .\Data\wix_bin\tools\
+            .\Data\UpdateManifest.exe .\Data\wix_bin\tools\bin\x86\burn.exe
+            del .\Data\UpdateManifest.exe
+
       - name: Download ffmpeg
         run: |
             Invoke-WebRequest https://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-4.2.3-win32-static.zip -Out .\ffmpeg-4.2.3-win32-static.zip

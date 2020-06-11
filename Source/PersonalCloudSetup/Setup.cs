@@ -36,12 +36,15 @@ namespace PersonalCloudSetup
                         Console.WriteLine("Data folder not exists!");
                         return -2;
                     }
-                    Console.WriteLine($"Data Folder: {di.FullName}");
-                    Console.WriteLine($"    Version: {buildVersion}");
 
                     string sAppPath = new Uri(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().
                         GetName().CodeBase)).LocalPath;
 
+                    Environment.SetEnvironmentVariable("WIXSHARP_WIXDIR", Path.Combine(di.FullName, @"wix_bin\tools\bin"));
+
+                    Console.WriteLine($" Wix Folder: {FindWixBinLocation()}");
+                    Console.WriteLine($"Data Folder: {di.FullName}");
+                    Console.WriteLine($"    Version: {buildVersion}");
                     Environment.CurrentDirectory = sAppPath;
                     {
                         string msiFilename = BuildMSI(Platform.x86, di.FullName, buildVersion);
@@ -67,6 +70,74 @@ namespace PersonalCloudSetup
             finally
             {
                 Environment.CurrentDirectory = savedWorkDir;
+            }
+        }
+
+        static string FindWixBinLocation()
+        {
+            // See if the command line was set for this property
+            var msBuildArgument = Environment.GetCommandLineArgs().FirstPrefixedValue("/WIXBIN:");
+            if (msBuildArgument.IsNotEmpty() && Directory.Exists(msBuildArgument))
+            {
+                return Path.GetFullPath(msBuildArgument);
+            }
+
+            // Now check to see if the environment variable was set
+            var environmentVar = Environment.GetEnvironmentVariable("WIXSHARP_WIXDIR");
+            if (environmentVar.IsNotEmpty() && Directory.Exists(environmentVar))
+            {
+                return Path.GetFullPath(environmentVar);
+            }
+
+            // Now check to see if the WIX install set an environment variable
+            var wixEnvironmentVariable = Environment.ExpandEnvironmentVariables(@"%WIX%\bin");
+            if (wixEnvironmentVariable.IsNotEmpty() && Directory.Exists(wixEnvironmentVariable))
+            {
+                return Path.GetFullPath(wixEnvironmentVariable);
+            }
+
+            // Now try the program files install location
+            string wixInstallDir = Directory.GetDirectories(ProgramFilesDirectory, "Windows Installer XML v3*")
+                                            .Order()
+                                            .LastOrDefault();
+
+            if (wixInstallDir.IsNotEmpty() && Directory.Exists(wixInstallDir))
+            {
+                return Path.GetFullPath(wixInstallDir.PathJoin("bin"));
+            }
+
+            // C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe
+            // Try a secondary location
+            wixInstallDir = Directory.GetDirectories(ProgramFilesDirectory, "WiX Toolset v3*")
+                                     .Order()
+                                     .LastOrDefault();
+
+            if (wixInstallDir.IsNotEmpty() && Directory.Exists(wixInstallDir))
+            {
+                return Path.GetFullPath(wixInstallDir.PathJoin("bin"));
+            }
+
+            throw new Exception("WiX binaries cannot be found. Wix# is capable of automatically finding WiX tools only if " +
+                                "WiX Toolset installed. In all other cases you need to set the environment variable " +
+                                "WIXSHARP_WIXDIR or WixSharp.Compiler.WixLocation to the valid path to the WiX binaries.\n" +
+                                "WiX binaries can be brought to the build environment by either installing WiX Toolset, " +
+                                "downloading Wix# suite or by adding WixSharp.wix.bin NuGet package to your project.");
+        }
+
+        /// <summary>
+        /// Gets the program files directory.
+        /// </summary>
+        /// <value>
+        /// The program files directory.
+        /// </value>
+        internal static string ProgramFilesDirectory
+        {
+            get
+            {
+                string programFilesDir = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                if ("".GetType().Assembly.Location.Contains("Framework64"))
+                    programFilesDir += " (x86)"; //for x64 systems
+                return programFilesDir;
             }
         }
 
